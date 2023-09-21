@@ -1,7 +1,11 @@
 package com.example.kakao.product;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +25,24 @@ public class ProductService {
 
     // (기능1) 상품 목록보기
     public List<ProductResponse.FindAllDTO> findAll(int page) {
-        return null;
+
+        int pageSize = 9; // 한 페이지당 보여줄 상품 수
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<Product> productPage = productJPARepository.findAll(pageable); 
+        List<ProductResponse.FindAllDTO> productPS = productPage.getContent()
+                .stream()
+                .map(ProductResponse.FindAllDTO::new)
+                .collect(Collectors.toList());
+
+        return productPS;
     }
 
     // (기능2) 상품 상세보기
     public ProductResponse.FindByIdDTO findById(int id) {
-        return null;
+        Product productPS = productJPARepository.findById(id)
+                .orElseThrow(() -> new Exception404("해당 id의 상품을 찾을 수 없습니다 : " + id));
+        List<Option> optionsPS = optionJPARepository.findByProductId(id);
+        return new ProductResponse.FindByIdDTO(productPS, optionsPS);
     }
 
     // 상품조회 + 옵션조회
@@ -58,4 +74,5 @@ public class ProductService {
         List<Option> optionsPS = optionJPARepository.findByProductId(id);
         return optionsPS;
     }
+
 }
